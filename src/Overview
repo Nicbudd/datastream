@@ -1,0 +1,13 @@
+I am making a string message that I can send to myself that will let me montior various different things
+I don't intend for it to be readable.
+Mainly using API access
+
+For example:
+
+220717-113345D03Z-PSM0253Z/T79F26C/D64F18C/A81F27C/
+
+220717      : 2022-07-17 (DATE)
+113345D03Z  : 11:33:45 EDT, 3:00 ish UTC (TIME)
+PSM0253Z    : Portsmouth NH weather, 02:53 UTC
+T79F26C/D64F18C/A81F27C : Temp 79F 26C - Dew 64F 18C Apparent 81F 27C 
+etc etc etc etc........
