@@ -8,8 +8,9 @@ enum CallType {
 
 fn main_but_cooler(return_type: CallType) {
     let mut getModules = [
-        (modules::timeAndDate(), 6),
-        (modules::wx(), 11),
+        (modules::date(), 6),
+        (modules::time("-0500", "-0400"), 16),
+        (modules::wx("PSM", "NH_ASOS"), 11),
     ];
 
     
@@ -23,7 +24,6 @@ fn main_but_cooler(return_type: CallType) {
                             } else {
                                 modules::TextBit {
                                     text: String::from('X').repeat(y),
-                                    len: y,
                                     style: Style::White,
                                 }
                             })
