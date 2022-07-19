@@ -63,8 +63,6 @@ pub fn time(standard: &str, daylight: &str) -> TextBit {
 
     let format = format!("{}{}{}Z@{:03}", loc_fmt, daylight_or_standard, utc_fmt, swatch_internet_time as u32);
 
-    println!("{format}");
-
     TextBit {text: format, style: Style::Bold}
 }
 
