@@ -223,8 +223,8 @@ fn get_format_wx(station: &str, network: &str) -> Result<String, ()> {
 
     
     let return_string = format!(
-        "{}{}/T{}F{}C/D{}F{}C{}/A{}F{}C/{:03}mb/{:02}mph{:03}@{:02}", resp.id, loc_valid_formatted, format_temp(temp_f), 
-        format_temp(temp_c), format_temp(dew_f), format_temp(dew_c), formatted_hum, 
+        "{}{}/T{}F{}C/D{}F{}C{}/A{}F{}C/{:03}mb/{:02}mph{:03}@{:02}", resp.id, loc_valid_formatted, 
+        format_temp(temp_f), format_temp(temp_c), format_temp(dew_f), format_temp(dew_c), formatted_hum, 
         format_temp(apparent_temp_f), format_temp(apparent_temp_c), mslpmb, format_wind_mph, wind_dir, 
         format_wind_kts);
 
