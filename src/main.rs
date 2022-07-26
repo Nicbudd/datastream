@@ -10,7 +10,7 @@ fn main_but_cooler(return_type: CallType) {
     let get_modules = [
         (modules::date(), 9),
         (modules::time("-0500", "-0400"), 16),
-        (modules::wx("PSM", "NH_ASOS"), 61),
+        (modules::wx("PSM", "NH_ASOS"), 59),
     ];
 
     
