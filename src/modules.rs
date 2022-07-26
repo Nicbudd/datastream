@@ -188,7 +188,21 @@ fn get_format_wx(station: &str, network: &str) -> Result<String, ()> {
         heat_index += ((rh - 85.0) / 10.0) * ((87.0 - temp_f)/5.0);
     }
 
-    let wind_mph = resp.last_ob.windspeedkt.ok_or(())? * 1.15078;
+    let wind_kts = resp.last_ob.windspeedkt.ok_or(())?;
+    let format_wind_kts = if (wind_kts.round() as u32) > 99 {
+        99
+    } else {
+        (wind_kts.round() as u32)
+    };
+
+    let wind_mph = wind_kts * 1.15078;
+    let format_wind_mph = if (wind_mph.round() as u32) > 99 {
+        99
+    } else {
+        (wind_mph.round() as u32)
+    };
+
+    let wind_dir = resp.last_ob.winddirectiondeg.ok_or(())?;
 
     let wind_chill = 35.74 + (0.6215 * temp_f) - (35.75 * wind_mph.powf(0.16)) + (0.4275 * temp_f * wind_mph.powf(0.16));
 
@@ -201,10 +215,20 @@ fn get_format_wx(station: &str, network: &str) -> Result<String, ()> {
     };
 
     let apparent_temp_c = fToC(apparent_temp_f);
+
+
+    let mslpmb = (resp.last_ob.mslpmb.ok_or(())? as u32) % 1000;
+
+    
+
     
     let return_string = format!(
-        "{}{}/T{}F{}C/D{}F{}C{}/A{}F{}C", resp.id, loc_valid_formatted, format_temp(temp_f), format_temp(temp_c), 
-        format_temp(dew_f), format_temp(dew_c), formatted_hum, format_temp(apparent_temp_f), format_temp(apparent_temp_c));
+        "{}{}/T{}F{}C/D{}F{}C{}/A{}F{}C/{:03}mb/{:03}@{:02}kt{:02}mph", resp.id, loc_valid_formatted, format_temp(temp_f), 
+        format_temp(temp_c), format_temp(dew_f), format_temp(dew_c), formatted_hum, 
+        format_temp(apparent_temp_f), format_temp(apparent_temp_c), mslpmb, wind_dir, 
+        format_wind_kts, format_wind_mph);
+
+    //println!("{return_string}");
 
     Ok(return_string)
 }
