@@ -159,8 +159,6 @@ fn get_format_wx(station: &str, network: &str) -> Result<String, ()> {
                                 loc_valid_caps.get(1).ok_or(())?.as_str(),
                                 loc_valid_caps.get(2).ok_or(())?.as_str());
 
-    println!("Here");
-
     let temp_f = resp.last_ob.airtempF.ok_or(())?;
     let temp_c = fToC(temp_f);
 
@@ -169,7 +167,7 @@ fn get_format_wx(station: &str, network: &str) -> Result<String, ()> {
 
     let rh = (100.0 * (std::f32::consts::E.powf((17.625 * dew_c)/(243.04+dew_c)) / std::f32::consts::E.powf((17.625 * temp_c)/(243.04+temp_c)))); 
     let formatted_hum = match rh as u32 {
-        100 => String::from("FOG"),
+        100 => String::from("SAT"),
         s => format!("{:02}%", s),
     };
 
@@ -207,8 +205,6 @@ fn get_format_wx(station: &str, network: &str) -> Result<String, ()> {
     let return_string = format!(
         "{}{}/T{}F{}C/D{}F{}C{}/A{}F{}C", resp.id, loc_valid_formatted, format_temp(temp_f), format_temp(temp_c), 
         format_temp(dew_f), format_temp(dew_c), formatted_hum, format_temp(apparent_temp_f), format_temp(apparent_temp_c));
-
-    println!("{}", return_string);
 
     Ok(return_string)
 }
