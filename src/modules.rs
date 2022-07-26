@@ -238,10 +238,10 @@ pub fn wx(station: &str, network: &str) -> TextBit {
 
     match get_format_wx(station, network) {
         Ok(s) => {
-            TextBit{text: s, style: Style::White} 
+            TextBit{text: s, style: Style::Green} 
         },
         Err(_) => {
-            TextBit{text: String::from("UNAVAILABLE"), style: Style::Red}
+            TextBit{text: String::from("UNAVAILABLEUNAVAILABLEUNAVAILABLEUNAVAILABLEUNAVAILABLEUNAV"), style: Style::Red}
         }
     }
 }

@@ -31,7 +31,12 @@ fn main_but_cooler(return_type: CallType) {
                                         Style::White => x.text,
                                         Style::Red => format!("\x1b[31m{}\x1b[0m", x.text),
                                         Style::Green => format!("\x1b[32m{}\x1b[0m", x.text),
-                                        Style::Blue => format!("\x1b[33m{}\x1b[0m", x.text),
+                                        Style::Blue => format!("\x1b[34m{}\x1b[0m", x.text),
+                                        Style::Purple => format!("\x1b[35m{}\x1b[0m", x.text),
+                                        Style::RedBG => format!("\x1b[41;30m{}\x1b[0m", x.text),
+                                        Style::GreenBG => format!("\x1b[42;30m{}\x1b[0m", x.text),
+                                        Style::BlueBG => format!("\x1b[44;30m{}\x1b[0m", x.text),
+                                        Style::PurpleBG => format!("\x1b[45;30m{}\x1b[0m", x.text),
                                         Style::Bold => format!("\x1b[1m{}\x1b[0m", x.text),
                                         _ => x.text,
                                     }
