@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc, Local, Timelike};
+use chrono::{Utc, Local, Timelike};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
@@ -31,9 +31,9 @@ pub enum Style {
 // MODULES
 
 pub fn date() -> TextBit {
-    let now = Utc::now();
-    let format = format!("{}", now.format("%y%m%d"));
-
+    let now = Local::now();
+    let mut format = format!("{}{}", now.format("%y%m%d"), now.format("%a"));
+    format = format.to_uppercase();
     TextBit {text: format, style: Style::Bold}
 }
 
@@ -70,7 +70,7 @@ pub fn time(standard: &str, daylight: &str) -> TextBit {
 
 //    (( [UTC+1 minutes] * 60) + ( [UTC+1 hours] * 3600)) / 86.4
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct WxResponse {
     server_gentime: String,
     id: String,
@@ -78,24 +78,62 @@ struct WxResponse {
     last_ob: Observation
 }  
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct Observation {
     local_valid: String,
     utc_valid: String,
-    airtempF: f32,
-    max_dayairtempF: f32,
-    min_dayairtempF: f32,
-    dewpointtempF: f32,
-    windspeedkt: f32,
-    winddirectiondeg: f32,
-    altimeterin: f32,
-    mslpmb: f32,
-    skycovercode: Vec<String>,
-    skylevelft: Vec<f32>,
-    visibilitymile: f32,
+
+    #[serde(rename="airtemp[F]")]
+    airtempF: Option<f32>,
+
+    #[serde(rename="max_dayairtemp[F]")]
+    max_dayairtempF: Option<f32>,
+
+    #[serde(rename="min_dayairtemp[F]")]
+    min_dayairtempF: Option<f32>,
+
+    #[serde(rename="dewpointtemp[F]")]
+    dewpointtempF: Option<f32>,
+
+    #[serde(rename="windspeed[kt]")]
+    windspeedkt: Option<f32>,
+
+    #[serde(rename="winddirection[deg]")]
+    winddirectiondeg: Option<f32>,
+
+    #[serde(rename="altimeter[in]")]
+    altimeterin: Option<f32>,
+
+    #[serde(rename="mslp[mb]")]
+    mslpmb: Option<f32>,
+
+    #[serde(rename="skycover[code]")]
+    skycovercode: Vec<Option<String>>,
+
+    #[serde(rename="skylevel[ft]")]
+    skylevelft: Vec<Option<f32>>,
+
+    #[serde(rename="visibility[mile]")]
+    visibilitymile: Option<f32>,
+
     raw: String,
-    presentwx: Vec<String>
+
+    presentwx: Vec<Option<String>>
 }  
+
+fn fToC(f: f32) -> f32 {
+    (f - 32.0) * (5.0/9.0)
+}
+
+fn format_temp(t: f32) -> String {
+    let round = t.round() as i32;
+
+    if round < 0 {
+        format!("M{:02}", round.abs())
+    } else {
+        format!("{:03}", round.abs())
+    }
+}
 
 fn get_format_wx(station: &str, network: &str) -> Result<String, ()> {
     let url = &format!("http://mesonet.agron.iastate.edu/json/current.py?station={station}&network={network}");
@@ -105,9 +143,12 @@ fn get_format_wx(station: &str, network: &str) -> Result<String, ()> {
         .map_err(|_| ())?
         .into_string()
         .map_err(|_| ())?;
+
+    //println!("{json_string}");
     
-    let resp: WxResponse = serde_json::from_str(&json_string) // TODO: Why is this erroring out
-                            .map_err(|_| ())?;
+    let resp: WxResponse = serde_json::from_str(&json_string).unwrap();
+
+    //println!("{:?}", resp);
 
     let zulu_time_re = Regex::new(r"\d{4}-\d{2}-\d{2}T(\d{2}):(\d{2}):\d{2}Z")
                             .map_err(|_| ())?;
@@ -117,9 +158,57 @@ fn get_format_wx(station: &str, network: &str) -> Result<String, ()> {
     let loc_valid_formatted = format!("{}{}Z",
                                 loc_valid_caps.get(1).ok_or(())?.as_str(),
                                 loc_valid_caps.get(2).ok_or(())?.as_str());
+
+    println!("Here");
+
+    let temp_f = resp.last_ob.airtempF.ok_or(())?;
+    let temp_c = fToC(temp_f);
+
+    let dew_f = resp.last_ob.dewpointtempF.ok_or(())?;
+    let dew_c = fToC(dew_f);
+
+    let rh = (100.0 * (std::f32::consts::E.powf((17.625 * dew_c)/(243.04+dew_c)) / std::f32::consts::E.powf((17.625 * temp_c)/(243.04+temp_c)))); 
+    let formatted_hum = match rh as u32 {
+        100 => String::from("FOG"),
+        s => format!("{:02}%", s),
+    };
+
+
+    let mut heat_index = -42.379 
+        + 2.04901523*temp_f 
+        + 10.14333127*rh 
+        - 0.22475541*temp_f*rh
+        - 0.00683783*temp_f*temp_f
+        - 0.05481717*rh*rh
+        + 0.00122874*temp_f*temp_f*rh
+        + 0.00085282*temp_f*rh*rh
+        - 0.00000199*temp_f*temp_f*rh*rh;
+
+    if rh < 13.0 && temp_f > 80.0 {
+        heat_index -= ((13.0-rh)/4.0)*(((17.0-((temp_f-95.0).abs()))/17.0).sqrt());
+    } else if rh > 85.0 && temp_f >= 80.0 && temp_f <= 87.0  {
+        heat_index += ((rh - 85.0) / 10.0) * ((87.0 - temp_f)/5.0);
+    }
+
+    let wind_mph = resp.last_ob.windspeedkt.ok_or(())? * 1.15078;
+
+    let wind_chill = 35.74 + (0.6215 * temp_f) - (35.75 * wind_mph.powf(0.16)) + (0.4275 * temp_f * wind_mph.powf(0.16));
+
+    let apparent_temp_f = if temp_f >= 80.0 {
+        heat_index
+    } else if temp_f <= 50.0 {
+        wind_chill
+    } else {
+        temp_f
+    };
+
+    let apparent_temp_c = fToC(apparent_temp_f);
     
     let return_string = format!(
-        "{}{}", resp.id, loc_valid_formatted);
+        "{}{}/T{}F{}C/D{}F{}C{}/A{}F{}C", resp.id, loc_valid_formatted, format_temp(temp_f), format_temp(temp_c), 
+        format_temp(dew_f), format_temp(dew_c), formatted_hum, format_temp(apparent_temp_f), format_temp(apparent_temp_c));
+
+    println!("{}", return_string);
 
     Ok(return_string)
 }
@@ -129,7 +218,7 @@ pub fn wx(station: &str, network: &str) -> TextBit {
 
     match get_format_wx(station, network) {
         Ok(s) => {
-            TextBit{text: s, style: Style::Red} 
+            TextBit{text: s, style: Style::White} 
         },
         Err(_) => {
             TextBit{text: String::from("UNAVAILABLE"), style: Style::Red}

@@ -7,17 +7,15 @@ enum CallType {
 }
 
 fn main_but_cooler(return_type: CallType) {
-    let mut getModules = [
-        (modules::date(), 6),
+    let get_modules = [
+        (modules::date(), 9),
         (modules::time("-0500", "-0400"), 16),
-        (modules::wx("PSM", "NH_ASOS"), 11),
+        (modules::wx("PSM", "NH_ASOS"), 41),
     ];
 
     
 
-    //let mut return_string = String::new();
-
-    let mut return_string = getModules
+    let return_string = get_modules
                             .into_iter()
                             .map(|(x, y)| if x.verify(y) {
                                 x
