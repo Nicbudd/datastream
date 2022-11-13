@@ -135,6 +135,30 @@ fn format_temp(t: f32) -> String {
     }
 }
 
+fn degrees_to_cardinal(degrees: &f32) -> &str {
+    let d_u32  = *degrees as u32;
+
+    match d_u32 - (d_u32 % 10) {
+        350 | 0   | 10  => ".N.",
+        20  | 30        => "NNE",
+        40  | 50        => "NE.",
+        60  | 70        => "ENE",
+        80  | 90  | 100 => ".E.",
+        110 | 120       => "ESE",
+        130 | 140       => "SE.",
+        150 | 160       => "SSE",
+        170 | 180 | 190 => ".S.",
+        200 | 210       => "SSW",
+        220 | 230       => "SW.",
+        240 | 250       => "WSW",
+        260 | 270 | 280 => ".W.",
+        290 | 300       => "WNW",
+        310 | 320       => "NW.",
+        330 | 340 | 350 => "NNW",
+        _ => "ERR"
+    }
+}
+
 fn get_format_wx(station: &str, network: &str) -> Result<String, ()> {
     let url = &format!("http://mesonet.agron.iastate.edu/json/current.py?station={station}&network={network}");
 
@@ -219,16 +243,17 @@ fn get_format_wx(station: &str, network: &str) -> Result<String, ()> {
 
     let mslpmb = (resp.last_ob.mslpmb.ok_or(())? as u32) % 1000;
 
-    
+    let cardinal = degrees_to_cardinal(&wind_dir);
 
     
     let return_string = format!(
-        "{}{}/T{}F{}C/D{}F{}C{}/A{}F{}C/{:03}mb/{:02}mph{:03}@{:02}", resp.id, loc_valid_formatted, 
+        "{}{}/T{}F{}C/D{}F{}C{}/A{}F{}C/{:03}mb/{:02}mph{:03}@{:02}{}", resp.id, loc_valid_formatted, 
         format_temp(temp_f), format_temp(temp_c), format_temp(dew_f), format_temp(dew_c), formatted_hum, 
         format_temp(apparent_temp_f), format_temp(apparent_temp_c), mslpmb, format_wind_mph, wind_dir, 
-        format_wind_kts);
+        format_wind_kts, cardinal);
 
-    //println!("{return_string}");
+    println!("{return_string}");
+
 
     Ok(return_string)
 }
